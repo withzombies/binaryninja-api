@@ -1,0 +1,16 @@
+language: cpp
+
+os:
+    - linux
+    - osx
+
+dist: bionic
+
+before_install:
+  - rm -rf build
+  - mkdir -p build
+
+script:
+  - cd build
+  - cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - cmake --build -j 3
