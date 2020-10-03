@@ -1290,7 +1290,7 @@ class BinaryView(object):
 	to the database is desired.
 	"""
 	name: Optional[str] = None
-	long_name Optional[str] = None
+	long_name: Optional[str] = None
 	_registered = False
 	_registered_cb = None
 	registered_view_type = None
@@ -4677,7 +4677,7 @@ class BinaryView(object):
 			<type: int32_t(int32_t x)>}}, '')
 			>>>
 		"""
-		if not (isinstance(text, str):
+		if not (isinstance(text, str)):
 			raise AttributeError("Source must be a string")
 
 		parse = core.BNTypeParserResult()
@@ -6200,7 +6200,7 @@ class StructuredDataView(object):
 	_address = 0
 	_bv = None
 
-	def __init__(self, bv: BinaryView, structure_name: str, address: int) -> 'StructuredDataView'':
+	def __init__(self, bv: BinaryView, structure_name: str, address: int) -> 'StructuredDataView':
 		self._bv = bv
 		self._structure_name = structure_name
 		self._address = address
