@@ -1298,7 +1298,7 @@ class BinaryView(object):
 	_associated_data = {}
 	_registered_instances = []
 
-	def __init__(self, file_metadata: Optional[binaryninja.filemetadata.FileMetadata] = None, parent_view: 'BinaryView' = None, handle=None) -> 'BinaryView':
+	def __init__(self, file_metadata: Optional[binaryninja.filemetadata.FileMetadata] = None, parent_view: Optional['BinaryView'] = None, handle=None):
 		if handle is not None:
 			self.handle = core.handle_of_type(handle, core.BNBinaryView)
 			if file_metadata is None:

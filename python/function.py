@@ -26,6 +26,8 @@ import ctypes
 import numbers
 
 # Binary Ninja components
+from typing import Optional, List, Dict, Any, Set, Iterator
+
 import binaryninja
 from binaryninja import _binaryninjacore as core
 from binaryninja import associateddatastore  # Required in the main scope due to being an argument for _FunctionAssociatedDataStore
@@ -46,15 +48,15 @@ class LookupTableEntry(object):
 		self._from_values = from_values
 		self._to_value = to_value
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return "[%s] -> %#x" % (', '.join(["%#x" % i for i in self.from_values]), self.to_value)
 
-	def __eq__(self, other):
+	def __eq__(self, other: 'LookupTableEntry') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return (self._from_values, self._to_value) == (other._from_values, other._to_value)
 
-	def __ne__(self, other):
+	def __ne__(self, other: 'LookupTableEntry') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return not (self == other)
@@ -84,7 +86,7 @@ class LookupTableEntry(object):
 
 
 class RegisterValue(object):
-	def __init__(self, arch = None, value = None, confidence = types.max_confidence):
+	def __init__(self, arch: Optional[binaryninja.BinaryView] = None, value = None, confidence: int = types.max_confidence):
 		self._is_constant = False
 		self._value = None
 		self._arch = None
@@ -92,9 +94,9 @@ class RegisterValue(object):
 		self._is_constant = False
 		self._offset = None
 		if value is None:
-			self._type = RegisterValueType.UndeterminedValue
+			self._type: RegisterValueType = RegisterValueType.UndeterminedValue
 		else:
-			self._type = RegisterValueType(value.state)
+			self._type: RegisterValueType = RegisterValueType(value.state)
 			if value.state == RegisterValueType.EntryValue:
 				self._arch = arch
 				if arch is not None:
@@ -110,7 +112,7 @@ class RegisterValue(object):
 				self._value = value.value
 		self._confidence = confidence
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		if self._type == RegisterValueType.EntryValue:
 			return "<entry %s>" % self._reg
 		if self._type == RegisterValueType.ConstantValue:
@@ -125,7 +127,7 @@ class RegisterValue(object):
 			return "<imported address from entry %#x>" % self._value
 		return "<undetermined>"
 
-	def __hash__(self):
+	def __hash__(self) -> int:
 		if self._type in [RegisterValueType.ConstantValue, RegisterValueType.ConstantPointerValue, RegisterValueType.ImportedAddressValue, RegisterValueType.ReturnAddressValue]:
 			return hash(self._value)
 		elif self.type == RegisterValueType.EntryValue:
@@ -133,7 +135,7 @@ class RegisterValue(object):
 		elif self._type == RegisterValueType.StackFrameOffset:
 			return hash(self._offset)
 
-	def __eq__(self, other):
+	def __eq__(self, other: 'RegisterValue') -> bool:
 		if self._type in [RegisterValueType.ConstantValue, RegisterValueType.ConstantPointerValue, RegisterValueType.ImportedAddressValue, RegisterValueType.ReturnAddressValue] and isinstance(other, numbers.Integral):
 			return self._value == other
 		elif self._type in [RegisterValueType.ConstantValue, RegisterValueType.ConstantPointerValue, RegisterValueType.ImportedAddressValue, RegisterValueType.ReturnAddressValue] and hasattr(other, 'type') and other.type == self._type:
@@ -146,7 +148,7 @@ class RegisterValue(object):
 			return self._offset == other
 		return NotImplemented
 
-	def __ne__(self, other):
+	def __ne__(self, other: 'RegisterValue') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return not (self == other)
@@ -169,11 +171,11 @@ class RegisterValue(object):
 		return result
 
 	@classmethod
-	def undetermined(self):
+	def undetermined(self) -> 'RegisterValue':
 		return RegisterValue()
 
 	@classmethod
-	def entry_value(self, arch, reg):
+	def entry_value(self, arch: Optional[binaryninja.BinaryView], reg) -> 'RegisterValue':
 		result = RegisterValue()
 		result._type = RegisterValueType.EntryValue
 		result._arch = arch
@@ -181,7 +183,7 @@ class RegisterValue(object):
 		return result
 
 	@classmethod
-	def constant(self, value):
+	def constant(self, value) -> 'RegisterValue':
 		result = RegisterValue()
 		result._type = RegisterValueType.ConstantValue
 		result._value = value
@@ -189,7 +191,7 @@ class RegisterValue(object):
 		return result
 
 	@classmethod
-	def constant_ptr(self, value):
+	def constant_ptr(self, value) -> 'RegisterValue':
 		result = RegisterValue()
 		result._type = RegisterValueType.ConstantPointerValue
 		result._value = value
@@ -197,37 +199,37 @@ class RegisterValue(object):
 		return result
 
 	@classmethod
-	def stack_frame_offset(self, offset):
+	def stack_frame_offset(self, offset) -> 'RegisterValue':
 		result = RegisterValue()
 		result._type = RegisterValueType.StackFrameOffset
 		result._offset = offset
 		return result
 
 	@classmethod
-	def imported_address(self, value):
+	def imported_address(self, value) -> 'RegisterValue':
 		result = RegisterValue()
 		result._type = RegisterValueType.ImportedAddressValue
 		result._value = value
 		return result
 
 	@classmethod
-	def return_address(self):
+	def return_address(self) -> 'RegisterValue':
 		result = RegisterValue()
 		result._type = RegisterValueType.ReturnAddressValue
 		return result
 
 	@property
-	def is_constant(self):
+	def is_constant(self) -> bool:
 		"""Boolean for whether the RegisterValue is known to be constant (read-only)"""
 		return self._is_constant
 
 	@property
-	def type(self):
+	def type(self) -> RegisterValueType:
 		""":class:`~enums.RegisterValueType` (read-only)"""
 		return self._type
 
 	@property
-	def arch(self):
+	def arch(self) -> Optional[binaryninja.BinaryView]:
 		"""Architecture where it exists, None otherwise (read-only)"""
 		return self._arch
 
@@ -242,59 +244,59 @@ class RegisterValue(object):
 		return self._value
 
 	@property
-	def offset(self):
+	def offset(self) -> Optional[int]:
 		"""Offset where it exists, None otherwise (read-only)"""
 		return self._offset
 
 	@property
-	def confidence(self):
+	def confidence(self) -> int:
 		"""Confidence where it exists, None otherwise (read-only)"""
 		return self._confidence
 
 
 class ValueRange(object):
-	def __init__(self, start, end, step):
+	def __init__(self, start: int, end: int, step: int):
 		self._start = start
 		self._end = end
 		self._step = step
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		if self.step == 1:
 			return "<range: %#x to %#x>" % (self.start, self.end)
 		return "<range: %#x to %#x, step %#x>" % (self.start, self.end, self.step)
 
-	def __eq__(self, other):
+	def __eq__(self, other: 'ValueRange') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return self.start == other.start and self.end == other.end and self.step == other.step
 		
 	@property
-	def start(self):
+	def start(self) -> int:
 		""" """
 		return self._start
 
 	@start.setter
-	def start(self, value):
+	def start(self, value: int):
 		""" """
 		self._start = value
 
 	@property
-	def end(self):
+	def end(self) -> int:
 		""" """
 		return self._end
 
 	@end.setter
-	def end(self, value):
+	def end(self, value: int):
 		""" """
 		self._end = value
 
 	@property
-	def step(self):
+	def step(self) -> int:
 		""" """
 		return self._step
 
 	@step.setter
-	def step(self, value):
+	def step(self, value: int):
 		""" """
 		self._step = value
 
@@ -305,7 +307,7 @@ class PossibleValueSet(object):
 	that a variable can take. It contains methods to instantiate different
 	value sets such as Constant, Signed/Unsigned Ranges, etc.
 	"""
-	def __init__(self, arch = None, value = None):
+	def __init__(self, arch: Optional[binaryninja.BinaryView] = None, value = None):
 		if value is None:
 			self._type = RegisterValueType.UndeterminedValue
 			return
@@ -356,7 +358,7 @@ class PossibleValueSet(object):
 				self._values.add(value.valueSet[i])
 		self._count = value.count
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		if self._type == RegisterValueType.EntryValue:
 			return "<entry %s>" % self.reg
 		if self._type == RegisterValueType.ConstantValue:
@@ -379,8 +381,8 @@ class PossibleValueSet(object):
 			return "<return address>"
 		return "<undetermined>"
 
-	def __eq__(self, other):
-		if self.type in [RegisterValueType.ConstantValue, RegisterValueType.ConstantPointerValue] and isinstance(other, numbers.Integral):
+	def __eq__(self, other: Union[int, 'PossibleValueSet']) -> bool:
+		if self.type in [RegisterValueType.ConstantValue, RegisterValueType.ConstantPointerValue] and isinstance(other, int):
 			return self.value == other
 		if not isinstance(other, self.__class__):
 			return NotImplemented
@@ -397,7 +399,7 @@ class PossibleValueSet(object):
 		else:
 			return self == other
 
-	def __ne__(self, other):
+	def __ne__(self, other: 'PossibleValueSet') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return not (self == other)
@@ -460,12 +462,12 @@ class PossibleValueSet(object):
 		return result
 	
 	@property
-	def type(self):
+	def type(self) -> RegisterValueType:
 		""" """
 		return self._type
 
 	@type.setter
-	def type(self, value):
+	def type(self, value: RegisterValueType):
 		""" """
 		self._type = value
 
@@ -490,66 +492,66 @@ class PossibleValueSet(object):
 		self._value = value
 
 	@property
-	def offset(self):
+	def offset(self) -> int:
 		""" """
 		return self._offset
 
 	@offset.setter
-	def offset(self, value):
+	def offset(self, value: int):
 		""" """
 		self._offset = value
 
 	@property
-	def ranges(self):
+	def ranges(self) -> List[ValueRange]:
 		""" """
 		return self._ranges
 
 	@ranges.setter
-	def ranges(self, value):
+	def ranges(self, value: List[ValueRange]):
 		""" """
 		self._ranges = value
 
 	@property
-	def table(self):
+	def table(self) -> List[LookupTableEntry]:
 		""" """
 		return self._table
 
 	@table.setter
-	def table(self, value):
+	def table(self, value: List[LookupTableEntry]):
 		""" """
 		self._table = value
 
 	@property
-	def mapping(self):
+	def mapping(self) -> Dict[int, int]:
 		""" """
 		return self._mapping
 
 	@mapping.setter
-	def mapping(self, value):
+	def mapping(self, value: Dict[int, int]):
 		""" """
 		self._mapping = value
 
 	@property
-	def values(self):
+	def values(self) -> Set[Any]:
 		""" """
 		return self._values
 
 	@values.setter
-	def values(self, value):
+	def values(self, value: Set[int]):
 		""" """
 		self._values = value
 
 	@property
-	def count(self):
+	def count(self) -> int:
 		""" """
 		return self._count
 
 	@count.setter
-	def count(self, value):
+	def count(self, value: int):
 		self._count = value
 
 	@classmethod
-	def undetermined(self):
+	def undetermined(self) -> 'PossibleValueSet':
 		"""
 		Create a PossibleValueSet object of type UndeterminedValue.
 
@@ -559,7 +561,7 @@ class PossibleValueSet(object):
 		return PossibleValueSet()
 
 	@classmethod
-	def constant(self, value):
+	def constant(self, value: int) -> 'PossibleValueSet':
 		""" 
 		Create a constant valued PossibleValueSet object.
 
@@ -572,7 +574,7 @@ class PossibleValueSet(object):
 		return result
 
 	@classmethod
-	def constant_ptr(self, value):
+	def constant_ptr(self, value: int) -> 'PossibleValueSet':
 		""" 
 		Create constant pointer valued PossibleValueSet object.
 
@@ -585,7 +587,7 @@ class PossibleValueSet(object):
 		return result
 
 	@classmethod
-	def stack_frame_offset(self, offset):
+	def stack_frame_offset(self, offset: int) -> 'PossibleValueSet':
 		""" 
 		Create a PossibleValueSet object for a stack frame offset.
 
@@ -598,7 +600,7 @@ class PossibleValueSet(object):
 		return result
 
 	@classmethod
-	def signed_range_value(self, ranges):
+	def signed_range_value(self, ranges: List[ValueRange]) -> 'PossibleValueSet':
 		"""
 		Create a PossibleValueSet object for a signed range of values.
 
@@ -619,7 +621,7 @@ class PossibleValueSet(object):
 		return result
 
 	@classmethod
-	def unsigned_range_value(self, ranges):
+	def unsigned_range_value(self, ranges: List[ValueRange]) -> 'PossibleValueSet':
 		"""
 		Create a PossibleValueSet object for a unsigned signed range of values.
 
@@ -640,7 +642,7 @@ class PossibleValueSet(object):
 		return result
 
 	@classmethod
-	def in_set_of_values(self, values):
+	def in_set_of_values(self, values: List[int]) -> 'PossibleValueSet':
 		"""
 		Create a PossibleValueSet object for a value in a set of values.
 
@@ -654,7 +656,7 @@ class PossibleValueSet(object):
 		return result
 
 	@classmethod 
-	def not_in_set_of_values(self, values):
+	def not_in_set_of_values(self, values: List[int]) -> 'PossibleValueSet':
 		"""
 		Create a PossibleValueSet object for a value NOT in a set of values.
 
@@ -668,7 +670,7 @@ class PossibleValueSet(object):
 		return result
 
 	@classmethod
-	def lookup_table_value(self, lookup_table, mapping):
+	def lookup_table_value(self, lookup_table: List[LookupTableEntry], mapping: Dict[int, int]) -> 'PossibleValueSet':
 		"""
 		Create a PossibleValueSet object for a value which is a member of a 
 		lookuptable.
@@ -684,23 +686,23 @@ class PossibleValueSet(object):
 		return result
 
 class ArchAndAddr(object):
-	def __init__(self, arch = None, addr = 0):
+	def __init__(self, arch: Optional[binaryninja.BinaryView] = None, addr: int = 0):
 		self._arch = binaryninja.architecture.CoreArchitecture(arch)
 		self._addr = addr
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return "archandaddr <%s @ %#x>" % (self._arch.name, self._addr)
 
 	@property
-	def arch(self):
+	def arch(self) -> Optional[binaryninja.BinaryView]:
 		return self._arch
 
 	@property
-	def addr(self):
+	def addr(self) -> int:
 		return self._addr
 
 class StackVariableReference(object):
-	def __init__(self, src_operand, t, name, var, ref_ofs, size):
+	def __init__(self, src_operand: Optional[int], t: binaryninja.Type, name: str, var, ref_ofs: int, size: int):
 		self._source_operand = src_operand
 		self._type = t
 		self._name = name
@@ -710,7 +712,7 @@ class StackVariableReference(object):
 		if self._source_operand == 0xffffffff:
 			self._source_operand = None
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		if self._source_operand is None:
 			if self._referenced_offset != self._var.storage:
 				return "<ref to %s%+#x>" % (self._name, self._referenced_offset - self._var.storage)
@@ -719,18 +721,18 @@ class StackVariableReference(object):
 			return "<operand %d ref to %s%+#x>" % (self._source_operand, self._name, self._var.storage)
 		return "<operand %d ref to %s>" % (self._source_operand, self._name)
 
-	def __eq__(self, other):
+	def __eq__(self, other: 'StackVariableReference') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return (self._source_operand, self._type, self._name, self._var, self._referenced_offset, self._size) == \
 			(other._source_operand, other._type, other._name, other._var, other._referenced_offset, other._size)
 
-	def __ne__(self, other):
+	def __ne__(self, other: 'StackVariableReference') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return not (self == other)
 
-	def __hash__(self):
+	def __hash__(self) -> int:
 		return hash((self._source_operand, self._type, self._name, self._var, self._referenced_offset, self._size))
 
 	@property
@@ -743,21 +745,21 @@ class StackVariableReference(object):
 		self._source_operand = value
 
 	@property
-	def type(self):
+	def type(self) -> binaryninja.Type:
 		""" """
 		return self._type
 
 	@type.setter
-	def type(self, value):
+	def type(self, value: binaryninja.Type):
 		self._type = value
 
 	@property
-	def name(self):
+	def name(self) -> str:
 		""" """
 		return self._name
 
 	@name.setter
-	def name(self, value):
+	def name(self, value: str):
 		self._name = value
 
 	@property
@@ -770,26 +772,26 @@ class StackVariableReference(object):
 		self._var = value
 
 	@property
-	def referenced_offset(self):
+	def referenced_offset(self) -> int:
 		""" """
 		return self._referenced_offset
 
 	@referenced_offset.setter
-	def referenced_offset(self, value):
+	def referenced_offset(self, value: int):
 		self._referenced_offset = value
 
 	@property
-	def size(self):
+	def size(self) -> int:
 		""" """
 		return self._size
 
 	@size.setter
-	def size(self, value):
+	def size(self, value: int):
 		self._size = value
 
 
 class Variable(object):
-	def __init__(self, func, source_type, index, storage, name = None, var_type = None):
+	def __init__(self, func: Optional[binaryninja.Function], source_type, index: int, storage: int, name: Optional[str] = None, var_type: Optional[binaryninja.Type] = None):
 		self._function = func
 		self._source_type = VariableSourceType(source_type)
 		self._index = index
@@ -814,61 +816,61 @@ class Variable(object):
 		self._name = name
 		self._type = var_type
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		if self._type is None:
 			return "<var %s>" % self.name
 		return "<var %s %s%s>" % (self._type.get_string_before_name(), self.name, self._type.get_string_after_name())
 
-	def __str__(self):
+	def __str__(self) -> str:
 		return self.name
 
-	def __eq__(self, other):
+	def __eq__(self, other: 'Variable') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return (self.identifier, self.function) == (other.identifier, other.function)
 
-	def __ne__(self, other):
+	def __ne__(self, other: 'Variable') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return not (self == other)
 
-	def __hash__(self):
+	def __hash__(self) -> int:
 		return hash((self.identifier, self.function))
 
 	@property
-	def function(self):
+	def function(self) -> Optional[binaryninja.Function]:
 		"""Function where the variable is defined"""
 		return self._function
 
 	@function.setter
-	def function(self, value):
+	def function(self, value: Optional[binaryninja.Function]):
 		self._function = value
 
 	@property
-	def source_type(self):
+	def source_type(self) -> VariableSourceType:
 		""":class:`~enums.VariableSourceType`"""
 		return self._source_type
 
 	@source_type.setter
-	def source_type(self, value):
+	def source_type(self, value: VariableSourceType):
 		self._source_type = value
 
 	@property
-	def index(self):
+	def index(self) -> int:
 		""" """
 		return self._index
 
 	@index.setter
-	def index(self, value):
+	def index(self, value: int):
 		self._index = value
 
 	@property
-	def storage(self):
+	def storage(self) -> int:
 		"""Stack offset for StackVariableSourceType, register index for RegisterVariableSourceType"""
 		return self._storage
 
 	@storage.setter
-	def storage(self, value):
+	def storage(self, value: int):
 		self._storage = value
 
 	@property
@@ -881,36 +883,45 @@ class Variable(object):
 		self._identifier = value
 
 	@property
-	def name(self):
+	def name(self) -> str:
 		"""Name of the variable"""
 		return self._name
 
 	@name.setter
-	def name(self, value):
-		self._name = value
+	def name(self, value: str):
+		if self._function is None:
+			self._name = value
+		elif value:
+			self._function.create_user_var(self, self._type, value)
+			self._name = value
+		else:
+			# Name will be reassigned by analysis on the next analysis update
+			# This Variable object is will not be updated
+			self._function.create_user_var(self, self._type, "")
+			self._name = None
 
 	@property
-	def type(self):
+	def type(self) -> Optional[binaryninja.Type]:
 		""" """
 		return self._type
 
 	@type.setter
-	def type(self, value):
+	def type(self, value: Optional[binaryninja.Type]):
 		self._type = value
 
 	@classmethod
-	def from_identifier(self, func, identifier, name = None, var_type = None):
+	def from_identifier(self, func: Optional[binaryninja.Function], identifier, name: Optional[str] = None, var_type: Optional[binaryninja.Type] = None) -> 'Variable':
 		var = core.BNFromVariableIdentifier(identifier)
 		return Variable(func, VariableSourceType(var.type), var.index, var.storage, name, var_type)
 
 class ConstantReference(object):
-	def __init__(self, val, size, ptr, intermediate):
+	def __init__(self, val: int, size: int, ptr: Optional[int], intermediate):
 		self._value = val
 		self._size = size
 		self._pointer = ptr
 		self._intermediate = intermediate
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		if self.pointer:
 			return "<constant pointer %#x>" % self.value
 		if self.size == 0:
@@ -918,30 +929,30 @@ class ConstantReference(object):
 		return "<constant %#x size %d>" % (self.value, self.size)
 
 	@property
-	def value(self):
+	def value(self) -> int:
 		""" """
 		return self._value
 
 	@value.setter
-	def value(self, value):
+	def value(self, value: int):
 		self._value = value
 
 	@property
-	def size(self):
+	def size(self) -> int:
 		""" """
 		return self._size
 
 	@size.setter
-	def size(self, value):
+	def size(self, value: int):
 		self._size = value
 
 	@property
-	def pointer(self):
+	def pointer(self) -> Optional[int]:
 		""" """
 		return self._pointer
 
 	@pointer.setter
-	def pointer(self, value):
+	def pointer(self, value: Optional[int]):
 		self._pointer = value
 
 	@property
@@ -960,59 +971,59 @@ class UserVariableValueInfo(object):
 		self.def_site = def_site
 		self.value = value
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return "<user value for %s @ %s:%#x -> %s>" % (self.var, self.def_site.arch.name, self.def_site.addr, self.value)
 
 
 class IndirectBranchInfo(object):
-	def __init__(self, source_arch, source_addr, dest_arch, dest_addr, auto_defined):
+	def __init__(self, source_arch: binaryninja.Architecture, source_addr: int, dest_arch: binaryninja.Architecture, dest_addr: int, auto_defined):
 		self.source_arch = source_arch
 		self.source_addr = source_addr
 		self.dest_arch = dest_arch
 		self.dest_addr = dest_addr
 		self.auto_defined = auto_defined
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return "<branch %s:%#x -> %s:%#x>" % (self.source_arch.name, self.source_addr, self.dest_arch.name, self.dest_addr)
 
 
 class ParameterVariables(object):
-	def __init__(self, var_list, confidence = types.max_confidence):
+	def __init__(self, var_list: List[Any], confidence: int = types.max_confidence):
 		self._vars = var_list
 		self._confidence = confidence
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return repr(self._vars)
 
-	def __len__(self):
+	def __len__(self) -> int:
 		return len(self._vars)
 
-	def __iter__(self):
+	def __iter__(self) -> Iterator[Any]:
 		for var in self._vars:
 			yield var
 
 	def __getitem__(self, idx):
 		return self._vars[idx]
 
-	def with_confidence(self, confidence):
+	def with_confidence(self, confidence: int) -> 'ParameterVariables':
 		return ParameterVariables(list(self._vars), confidence = confidence)
 
 	@property
-	def vars(self):
+	def vars(self) -> List[Any]:
 		""" """
 		return self._vars
 
 	@vars.setter
-	def vars(self, value):
+	def vars(self, value: List[Any]):
 		self._vars = value
 
 	@property
-	def confidence(self):
+	def confidence(self) -> int:
 		""" """
 		return self._confidence
 
 	@confidence.setter
-	def confidence(self, value):
+	def confidence(self, value: int):
 		self._confidence = value
 
 
