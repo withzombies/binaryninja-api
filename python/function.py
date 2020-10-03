@@ -26,7 +26,7 @@ import ctypes
 import numbers
 
 # Binary Ninja components
-from typing import Optional, List, Dict, Any, Set, Iterator
+from typing import Optional, List, Dict, Any, Set, Iterator, Hashable, Tuple
 
 import binaryninja
 from binaryninja import _binaryninjacore as core
@@ -1034,7 +1034,7 @@ class _FunctionAssociatedDataStore(associateddatastore._AssociatedDataStore):
 class Function(object):
 	_associated_data = {}
 
-	def __init__(self, view = None, handle = None):
+	def __init__(self, view: Optional[binaryninja.BinaryView] = None, handle: Optional[int] = None):
 		self._advanced_analysis_requests = 0
 		if handle is None:
 			self.handle = None
@@ -1044,8 +1044,8 @@ class Function(object):
 			self._view = binaryninja.binaryview.BinaryView(handle = core.BNGetFunctionData(self.handle))
 		else:
 			self._view = view
-		self._arch = None
-		self._platform = None
+		self._arch: Optional[binaryninja.Architecture] = None
+		self._platform: Optional[binaryninja.Platform] = None
 
 	def __del__(self):
 		if self.handle is not None:
@@ -1053,47 +1053,47 @@ class Function(object):
 				core.BNReleaseAdvancedFunctionAnalysisDataMultiple(self.handle, self._advanced_analysis_requests)
 			core.BNFreeFunction(self.handle)
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		arch = self.arch
 		if arch:
 			return "<func: %s@%#x>" % (arch.name, self.start)
 		else:
 			return "<func: %#x>" % self.start
 
-	def __eq__(self, other):
+	def __eq__(self, other: 'Function') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return ctypes.addressof(self.handle.contents) == ctypes.addressof(other.handle.contents)
 
-	def __ne__(self, other):
+	def __ne__(self, other: 'Function') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return not (self == other)
 
-	def __lt__(self, other):
+	def __lt__(self, other: 'Function') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return self.start < other.start
 
-	def __gt__(self, other):
+	def __gt__(self, other: 'Function') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return self.start > other.start
 
-	def __le__(self, other):
+	def __le__(self, other: 'Function') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return self.start <= other.start
 
-	def __ge__(self, other):
+	def __ge__(self, other: 'Function') -> bool:
 		if not isinstance(other, self.__class__):
 			return NotImplemented
 		return self.start >= other.start
 
-	def __hash__(self):
+	def __hash__(self) -> int:
 		return hash((self.start, self.arch.name, self.platform.name))
 
-	def __getitem__(self, i):
+	def __getitem__(self, i) -> binaryninja.BasicBlock:
 		count = ctypes.c_ulonglong()
 		blocks = core.BNGetFunctionBasicBlockList(self.handle, count)
 		try:
@@ -1108,7 +1108,7 @@ class Function(object):
 		finally:
 			core.BNFreeBasicBlockList(blocks, count.value)
 
-	def __iter__(self):
+	def __iter__(self) -> Iterator[binaryninja.BasicBlock]:
 		count = ctypes.c_ulonglong()
 		blocks = core.BNGetFunctionBasicBlockList(self.handle, count)
 		try:
@@ -1117,29 +1117,29 @@ class Function(object):
 		finally:
 			core.BNFreeBasicBlockList(blocks, count.value)
 
-	def __str__(self):
+	def __str__(self) -> str:
 		result = ""
 		for token in self.type_tokens:
 			result += token.text
 		return result
 
 	@classmethod
-	def _unregister(cls, func):
+	def _unregister(cls, func) -> None:
 		handle = ctypes.cast(func, ctypes.c_void_p)
 		if handle.value in cls._associated_data:
 			del cls._associated_data[handle.value]
 
 	@classmethod
-	def set_default_session_data(cls, name, value):
+	def set_default_session_data(cls, name: Hashable, value: Any) -> None:
 		_FunctionAssociatedDataStore.set_default(name, value)
 
 	@property
-	def name(self):
+	def name(self) -> str:
 		"""Symbol name for the function"""
 		return self.symbol.name
 
 	@name.setter
-	def name(self, value):
+	def name(self, value: Optional[str]) -> None:
 		if value is None:
 			if self.symbol is not None:
 				self.view.undefine_user_symbol(self.symbol)
@@ -1148,12 +1148,12 @@ class Function(object):
 			self.view.define_user_symbol(symbol)
 
 	@property
-	def view(self):
+	def view(self) -> Optional[binaryninja.BinaryView]:
 		"""Function view (read-only)"""
 		return self._view
 
 	@property
-	def arch(self):
+	def arch(self) -> Optional[binaryninja.Architecture]:
 		"""Function architecture (read-only)"""
 		if self._arch:
 			return self._arch
@@ -1165,7 +1165,7 @@ class Function(object):
 			return self._arch
 
 	@property
-	def platform(self):
+	def platform(self) -> Optional[binaryninja.Platform]:
 		"""Function platform (read-only)"""
 		if self._platform:
 			return self._platform
@@ -1177,27 +1177,27 @@ class Function(object):
 			return self._platform
 
 	@property
-	def start(self):
+	def start(self) -> int:
 		"""Function start address (read-only)"""
 		return core.BNGetFunctionStart(self.handle)
 
 	@property
-	def total_bytes(self):
+	def total_bytes(self) -> int:
 		"""Total bytes of a function calculated by summing each basic_block. Because basic blocks can overlap and have gaps between them this may or may not be equivalent to a .size property."""
 		return sum(map(len, self))
 
 	@property
-	def highest_address(self):
+	def highest_address(self) -> int:
 		"The highest virtual address contained in a function."""
 		return max(self, key=lambda block:block.end).end - 1
 
 	@property
-	def lowest_address(self):
+	def lowest_address(self) -> int:
 		"""The lowest virtual address contained in a function."""
 		return min(self, key=lambda block:block.start).start
 
 	@property
-	def symbol(self):
+	def symbol(self) -> Optional[binaryninja.Symbol]:
 		"""Function symbol(read-only)"""
 		sym = core.BNGetFunctionSymbol(self.handle)
 		if sym is None:
@@ -1205,18 +1205,18 @@ class Function(object):
 		return types.Symbol(None, None, None, handle = sym)
 
 	@property
-	def auto(self):
+	def auto(self) -> bool:
 		"""Whether function was automatically discovered (read-only)"""
 		return core.BNWasFunctionAutomaticallyDiscovered(self.handle)
 
 	@property
-	def can_return(self):
+	def can_return(self) -> binaryninja.BoolWithConfidence:
 		"""Whether function can return"""
 		result = core.BNCanFunctionReturn(self.handle)
 		return types.BoolWithConfidence(result.value, confidence = result.confidence)
 
 	@can_return.setter
-	def can_return(self, value):
+	def can_return(self, value: binaryninja.BoolWithConfidence):
 		bc = core.BNBoolWithConfidence()
 		bc.value = bool(value)
 		if hasattr(value, 'confidence'):
@@ -1226,17 +1226,17 @@ class Function(object):
 		core.BNSetUserFunctionCanReturn(self.handle, bc)
 
 	@property
-	def explicitly_defined_type(self):
+	def explicitly_defined_type(self) -> bool:
 		"""Whether function has explicitly defined types (read-only)"""
 		return core.BNFunctionHasExplicitlyDefinedType(self.handle)
 
 	@property
-	def needs_update(self):
+	def needs_update(self) -> bool:
 		"""Whether the function has analysis that needs to be updated (read-only)"""
 		return core.BNIsFunctionUpdateNeeded(self.handle)
 
 	@property
-	def basic_blocks(self):
+	def basic_blocks(self) -> List[binaryninja.BasicBlock]:
 		"""List of basic blocks (read-only)"""
 		count = ctypes.c_ulonglong()
 		blocks = core.BNGetFunctionBasicBlockList(self.handle, count)
@@ -1247,7 +1247,7 @@ class Function(object):
 		return result
 
 	@property
-	def comments(self):
+	def comments(self) -> Dict[int, str]:
 		"""Dict of comments (read-only)"""
 		count = ctypes.c_ulonglong()
 		addrs = core.BNGetCommentedAddresses(self.handle, count)
@@ -1257,13 +1257,13 @@ class Function(object):
 		core.BNFreeAddressList(addrs)
 		return result
 
-	def create_user_tag(self, type, data):
+	def create_user_tag(self, type: binaryninja.TagType, data: str) -> binaryninja.Tag:
 		return self.create_tag(type, data, True)
 
-	def create_auto_tag(self, type, data):
+	def create_auto_tag(self, type: binaryninja.TagType, data: str) -> binaryninja.Tag:
 		return self.create_tag(type, data, False)
 
-	def create_tag(self, type, data, user=True):
+	def create_tag(self, type: binaryninja.TagType, data: str, user: bool=True) -> binaryninja.Tag:
 		"""
 		``create_tag`` creates a new Tag object but does not add it anywhere.
 		Use :py:meth:`create_user_address_tag` or
@@ -1283,7 +1283,7 @@ class Function(object):
 		return self.view.create_tag(type, data, user)
 
 	@property
-	def address_tags(self):
+	def address_tags(self) -> List[Tuple[binaryninja.Architecture, int, binaryninja.Tag]]:
 		"""
 		``address_tags`` gets a list of all address Tags in the function.
 		Tags are returned as a list of (arch, address, Tag) tuples.
@@ -1300,7 +1300,7 @@ class Function(object):
 		core.BNFreeTagReferences(tags, count.value)
 		return result
 
-	def get_address_tags_at(self, addr, arch=None):
+	def get_address_tags_at(self, addr: int, arch:Optional[binaryninja.Architecture]=None) -> List[binaryninja.Tag]:
 		"""
 		``get_address_tags_at`` gets a list of all Tags in the function at a given address.
 
@@ -1319,7 +1319,7 @@ class Function(object):
 		core.BNFreeTagList(tags, count.value)
 		return result
 
-	def add_user_address_tag(self, addr, tag, arch=None):
+	def add_user_address_tag(self, addr: int, tag: binaryninja.Tag, arch:Optional[binaryninja.Architecture]=None) -> None:
 		"""
 		``add_user_address_tag`` adds an already-created Tag object at a given address.
 		Since this adds a user tag, it will be added to the current undo buffer.
@@ -1333,7 +1333,7 @@ class Function(object):
 			arch = self.arch
 		core.BNAddUserAddressTag(self.handle, arch.handle, addr, tag.handle)
 
-	def create_user_address_tag(self, addr, type, data, unique=False, arch=None):
+	def create_user_address_tag(self, addr: int, type: binaryninja.TagType, data: str, unique: bool=False, arch:Optional[binaryninja.Architecture]=None) -> binaryninja.Tag:
 		"""
 		``create_user_address_tag`` creates and adds a Tag object at a given
 		address. Since this adds a user tag, it will be added to the current
@@ -1926,7 +1926,7 @@ class Function(object):
 	def mark_recent_use(self):
 		core.BNMarkFunctionAsRecentlyUsed(self.handle)
 
-	def get_comment_at(self, addr):
+	def get_comment_at(self, addr: int) -> str:
 		return core.BNGetCommentForAddress(self.handle, addr)
 
 	def set_comment(self, addr, comment):
