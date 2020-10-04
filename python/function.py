@@ -61,7 +61,7 @@ class LookupTableEntry(object):
 			return NotImplemented
 		return not (self == other)
 
-	def __hash__(self):
+	def __hash__(self) -> int:
 		return hash((self._from_values, self._to_value))
 
 	@property
@@ -883,7 +883,7 @@ class Variable(object):
 		self._identifier = value
 
 	@property
-	def name(self) -> str:
+	def name(self) -> Optional[str]:
 		"""Name of the variable"""
 		return self._name
 
@@ -1039,7 +1039,7 @@ class Function(object):
 		if handle is None:
 			self.handle = None
 			raise NotImplementedError("creation of standalone 'Function' objects is not implemented")
-		self.handle = core.handle_of_type(handle, core.BNFunction)
+		self.handle : int = core.handle_of_type(handle, core.BNFunction)
 		if view is None:
 			self._view = binaryninja.binaryview.BinaryView(handle = core.BNGetFunctionData(self.handle))
 		else:
@@ -1721,7 +1721,7 @@ class Function(object):
 		core.BNSetUserFunctionCallingConvention(self.handle, conv_conf)
 
 	@property
-	def parameter_vars(self) -> List[binaryninja.Variable]:
+	def parameter_vars(self) -> ParameterVariables:
 		"""List of variables for the incoming function parameters"""
 		result = core.BNGetFunctionParameterVariables(self.handle)
 		var_list = []
@@ -2190,7 +2190,7 @@ class Function(object):
 		core.BNFreeILInstructionList(instrs)
 		return result
 
-	def get_flags_read_by_lifted_il_instruction(self, i: int):
+	def get_flags_read_by_lifted_il_instruction(self, i: int) -> List[str]:
 		count = ctypes.c_ulonglong()
 		flags = core.BNGetFlagsReadByLiftedILInstruction(self.handle, i, count)
 		result = []
@@ -2199,7 +2199,7 @@ class Function(object):
 		core.BNFreeRegisterList(flags)
 		return result
 
-	def get_flags_written_by_lifted_il_instruction(self, i):
+	def get_flags_written_by_lifted_il_instruction(self, i: int) -> List[str]:
 		count = ctypes.c_ulonglong()
 		flags = core.BNGetFlagsWrittenByLiftedILInstruction(self.handle, i, count)
 		result = []
@@ -2208,20 +2208,20 @@ class Function(object):
 		core.BNFreeRegisterList(flags)
 		return result
 
-	def create_graph(self, graph_type = FunctionGraphType.NormalFunctionGraph, settings = None):
+	def create_graph(self, graph_type: FunctionGraphType = FunctionGraphType.NormalFunctionGraph, settings: Optional[binaryninja.DisassemblySettings] = None) -> binaryninja.FlowGraph:
 		if settings is not None:
 			settings_obj = settings.handle
 		else:
 			settings_obj = None
 		return binaryninja.flowgraph.CoreFlowGraph(core.BNCreateFunctionGraph(self.handle, graph_type, settings_obj))
 
-	def apply_imported_types(self, sym, type=None):
+	def apply_imported_types(self, sym: binaryninja.Symbol, type: Optional[binaryninja.Type] = None) -> None:
 		core.BNApplyImportedTypes(self.handle, sym.handle, None if type is None else type.handle)
 
-	def apply_auto_discovered_type(self, func_type):
+	def apply_auto_discovered_type(self, func_type: binaryninja.Type) -> None:
 		core.BNApplyAutoDiscoveredFunctionType(self.handle, func_type.handle)
 
-	def set_auto_indirect_branches(self, source, branches, source_arch=None):
+	def set_auto_indirect_branches(self, source: int, branches: List[Tuple[binaryninja.Architecture, int]], source_arch: Optional[binaryninja.Architecture] = None) -> None:
 		if source_arch is None:
 			source_arch = self.arch
 		branch_list = (core.BNArchitectureAndAddress * len(branches))()
@@ -2230,7 +2230,7 @@ class Function(object):
 			branch_list[i].address = branches[i][1]
 		core.BNSetAutoIndirectBranches(self.handle, source_arch.handle, source, branch_list, len(branches))
 
-	def set_user_indirect_branches(self, source, branches, source_arch=None):
+	def set_user_indirect_branches(self, source: int, branches: List[Tuple[binaryninja.Architecture, int]], source_arch: Optional[binaryninja.Architecture] = None) -> None:
 		if source_arch is None:
 			source_arch = self.arch
 		branch_list = (core.BNArchitectureAndAddress * len(branches))()
@@ -2239,7 +2239,7 @@ class Function(object):
 			branch_list[i].address = branches[i][1]
 		core.BNSetUserIndirectBranches(self.handle, source_arch.handle, source, branch_list, len(branches))
 
-	def get_indirect_branches_at(self, addr, arch=None):
+	def get_indirect_branches_at(self, addr: int, arch: Optional[binaryninja.Architecture] = None) -> List[binaryninja.IndirectBranchInfo]:
 		if arch is None:
 			arch = self.arch
 		count = ctypes.c_ulonglong()
@@ -2250,7 +2250,7 @@ class Function(object):
 		core.BNFreeIndirectBranchList(branches)
 		return result
 
-	def get_block_annotations(self, addr, arch=None):
+	def get_block_annotations(self, addr: int, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		count = ctypes.c_ulonglong(0)
@@ -2372,12 +2372,12 @@ class Function(object):
 			regs.confidence = types.max_confidence
 		core.BNSetAutoFunctionClobberedRegisters(self.handle, regs)
 
-	def get_int_display_type(self, instr_addr, value, operand, arch=None):
+	def get_int_display_type(self, instr_addr: int, value: int, operand: int, arch: Optional[binaryninja.Architecture] = None) -> binaryninja.IntegerDisplayType:
 		if arch is None:
 			arch = self.arch
 		return IntegerDisplayType(core.BNGetIntegerConstantDisplayType(self.handle, arch.handle, instr_addr, value, operand))
 
-	def set_int_display_type(self, instr_addr, value, operand, display_type, arch=None):
+	def set_int_display_type(self, instr_addr, value, operand, display_type, arch: Optional[binaryninja.Architecture] = None):
 		"""
 
 		:param int instr_addr:
@@ -2408,7 +2408,7 @@ class Function(object):
 		core.BNReleaseAdvancedFunctionAnalysisData(self.handle)
 		self._advanced_analysis_requests -= 1
 
-	def get_basic_block_at(self, addr, arch=None):
+	def get_basic_block_at(self, addr, arch: Optional[binaryninja.Architecture] = None):
 		"""
 		``get_basic_block_at`` returns the BasicBlock of the optionally specified Architecture ``arch`` at the given
 		address ``addr``.
@@ -2426,7 +2426,7 @@ class Function(object):
 			return None
 		return binaryninja.basicblock.BasicBlock(block, self._view)
 
-	def get_instr_highlight(self, addr, arch=None):
+	def get_instr_highlight(self, addr, arch: Optional[binaryninja.Architecture] = None):
 		"""
 		:Example:
 			>>> current_function.set_user_instr_highlight(here, highlight.HighlightColor(red=0xff, blue=0xff, green=0))
@@ -2444,7 +2444,7 @@ class Function(object):
 			return highlight.HighlightColor(red = color.r, green = color.g, blue = color.b, alpha = color.alpha)
 		return highlight.HighlightColor(color = HighlightStandardColor.NoHighlightColor)
 
-	def set_auto_instr_highlight(self, addr, color, arch=None):
+	def set_auto_instr_highlight(self, addr, color, arch: Optional[binaryninja.Architecture] = None):
 		"""
 		``set_auto_instr_highlight`` highlights the instruction at the specified address with the supplied color
 
@@ -2462,7 +2462,7 @@ class Function(object):
 			color = highlight.HighlightColor(color = color)
 		core.BNSetAutoInstructionHighlight(self.handle, arch.handle, addr, color._get_core_struct())
 
-	def set_user_instr_highlight(self, addr, color, arch=None):
+	def set_user_instr_highlight(self, addr, color, arch: Optional[binaryninja.Architecture] = None):
 		"""
 		``set_user_instr_highlight`` highlights the instruction at the specified address with the supplied color
 
@@ -2534,7 +2534,7 @@ class Function(object):
 		var_data.storage = var.storage
 		core.BNDeleteUserVariable(self.handle, var_data)
 
-	def get_stack_var_at_frame_offset(self, offset, addr, arch=None):
+	def get_stack_var_at_frame_offset(self, offset, addr, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		found_var = core.BNVariableNameAndType()
@@ -2564,14 +2564,14 @@ class Function(object):
 		result = core.BNGetFunctionRegisterValueAtExit(self.handle, self.arch.get_reg_index(reg))
 		return RegisterValue(self.arch, result.value, confidence = result.confidence)
 
-	def set_auto_call_stack_adjustment(self, addr, adjust, arch=None):
+	def set_auto_call_stack_adjustment(self, addr, adjust, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		if not isinstance(adjust, types.SizeWithConfidence):
 			adjust = types.SizeWithConfidence(adjust)
 		core.BNSetAutoCallStackAdjustment(self.handle, arch.handle, addr, adjust.value, adjust.confidence)
 
-	def set_auto_call_reg_stack_adjustment(self, addr, adjust, arch=None):
+	def set_auto_call_reg_stack_adjustment(self, addr, adjust, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		adjust_buf = (core.BNRegisterStackAdjustment * len(adjust))()
@@ -2586,7 +2586,7 @@ class Function(object):
 			i += 1
 		core.BNSetAutoCallRegisterStackAdjustment(self.handle, arch.handle, addr, adjust_buf, len(adjust))
 
-	def set_auto_call_reg_stack_adjustment_for_reg_stack(self, addr, reg_stack, adjust, arch=None):
+	def set_auto_call_reg_stack_adjustment_for_reg_stack(self, addr, reg_stack, adjust, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		reg_stack = arch.get_reg_stack_index(reg_stack)
@@ -2595,7 +2595,7 @@ class Function(object):
 		core.BNSetAutoCallRegisterStackAdjustmentForRegisterStack(self.handle, arch.handle, addr, reg_stack,
 			adjust.value, adjust.confidence)
 
-	def set_call_type_adjustment(self, addr, adjust_type, arch=None):
+	def set_call_type_adjustment(self, addr, adjust_type, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		if adjust_type is None:
@@ -2606,14 +2606,14 @@ class Function(object):
 			tc.confidence = adjust_type.confidence
 		core.BNSetUserCallTypeAdjustment(self.handle, arch.handle, addr, tc)
 
-	def set_call_stack_adjustment(self, addr, adjust, arch=None):
+	def set_call_stack_adjustment(self, addr, adjust, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		if not isinstance(adjust, types.SizeWithConfidence):
 			adjust = types.SizeWithConfidence(adjust)
 		core.BNSetUserCallStackAdjustment(self.handle, arch.handle, addr, adjust.value, adjust.confidence)
 
-	def set_call_reg_stack_adjustment(self, addr, adjust, arch=None):
+	def set_call_reg_stack_adjustment(self, addr, adjust, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		adjust_buf = (core.BNRegisterStackAdjustment * len(adjust))()
@@ -2628,7 +2628,7 @@ class Function(object):
 			i += 1
 		core.BNSetUserCallRegisterStackAdjustment(self.handle, arch.handle, addr, adjust_buf, len(adjust))
 
-	def set_call_reg_stack_adjustment_for_reg_stack(self, addr, reg_stack, adjust, arch=None):
+	def set_call_reg_stack_adjustment_for_reg_stack(self, addr, reg_stack, adjust, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		reg_stack = arch.get_reg_stack_index(reg_stack)
@@ -2637,7 +2637,7 @@ class Function(object):
 		core.BNSetUserCallRegisterStackAdjustmentForRegisterStack(self.handle, arch.handle, addr, reg_stack,
 			adjust.value, adjust.confidence)
 
-	def get_call_type_adjustment(self, addr, arch=None):
+	def get_call_type_adjustment(self, addr, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		result = core.BNGetCallTypeAdjustment(self.handle, arch.handle, addr)
@@ -2646,13 +2646,13 @@ class Function(object):
 			return types.Type(result.type, platform = platform, confidence = result.confidence)
 		return None
 
-	def get_call_stack_adjustment(self, addr, arch=None):
+	def get_call_stack_adjustment(self, addr, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		result = core.BNGetCallStackAdjustment(self.handle, arch.handle, addr)
 		return types.SizeWithConfidence(result.value, confidence = result.confidence)
 
-	def get_call_reg_stack_adjustment(self, addr, arch=None):
+	def get_call_reg_stack_adjustment(self, addr, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		count = ctypes.c_ulonglong()
@@ -2664,7 +2664,7 @@ class Function(object):
 		core.BNFreeRegisterStackAdjustments(adjust)
 		return result
 
-	def get_call_reg_stack_adjustment_for_reg_stack(self, addr, reg_stack, arch=None):
+	def get_call_reg_stack_adjustment_for_reg_stack(self, addr, reg_stack, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		reg_stack = arch.get_reg_stack_index(reg_stack)
@@ -2672,7 +2672,7 @@ class Function(object):
 		result = types.RegisterStackAdjustmentWithConfidence(adjust.adjustment, confidence = adjust.confidence)
 		return result
 
-	def is_call_instruction(self, addr, arch=None):
+	def is_call_instruction(self, addr, arch: Optional[binaryninja.Architecture] = None):
 		if arch is None:
 			arch = self.arch
 		return core.BNIsCallInstruction(self.handle, arch.handle, addr)
@@ -2747,7 +2747,7 @@ class Function(object):
 		var_data.storage = var.storage
 		core.BNClearUserVariableValue(self.handle, var_data, def_site)
 
-	def get_all_user_var_values(self):
+	def get_all_user_var_values(self) -> Dict[binaryninja.Variable, Dict[binaryninja.ArchAndAddr, binaryninja.PossibleValueSet]]:
 		"""
 		Returns a map of current defined user variable values.
 

@@ -200,7 +200,7 @@ class AnalysisCompletionEvent(object):
 		>>> evt = AnalysisCompletionEvent(bv, on_complete)
 		>>>
 	"""
-	def __init__(self, view: 'BinaryView', callback: Callable[[], None]) -> 'AnalysisCompletionEvent':
+	def __init__(self, view: 'BinaryView', callback: Callable[[], None]):
 		self._view = view
 		self.callback = callback
 		self._cb = ctypes.CFUNCTYPE(None, ctypes.c_void_p)(self._notify)
@@ -1796,7 +1796,7 @@ class BinaryView(object):
 		return binaryninja.function.Function(self, func)
 
 	@property
-	def symbols(self) -> List[binaryninja.Symbol]:
+	def symbols(self) -> Dict[str, binaryninja.Symbol]:
 		"""Dict of symbols (read-only)"""
 		count = ctypes.c_ulonglong(0)
 		syms = core.BNGetSymbols(self.handle, count, None)
@@ -2208,7 +2208,7 @@ class BinaryView(object):
 	def init(self):
 		return True
 
-	def get_disassembly(self, addr, arch=None):
+	def get_disassembly(self, addr, arch: Optional[binaryninja.Architecture] = None):
 		"""
 		``get_disassembly`` simple helper function for printing disassembly of a given address
 
@@ -2230,7 +2230,7 @@ class BinaryView(object):
 			return None
 		return ''.join(str(a) for a in txt).strip()
 
-	def get_next_disassembly(self, arch=None):
+	def get_next_disassembly(self, arch: Optional[binaryninja.Architecture] = None):
 		"""
 		``get_next_disassembly`` simple helper function for printing disassembly of the next instruction.
 		The internal state of the instruction to be printed is stored in the :attr:`next_address` attribute
@@ -4597,7 +4597,7 @@ class BinaryView(object):
 			cf fa ed fe 07 00 00 01  ........
 		"""
 		class LinearDisassemblyIterator(object):
-			def __init__(self, view: 'BinaryView', settings: binaryninja.DisassemblySettings) -> 'LinearDisassemblyIterator':
+			def __init__(self, view: 'BinaryView', settings: binaryninja.DisassemblySettings):
 				self._view = view
 				self._settings = settings
 
@@ -5566,7 +5566,7 @@ class BinaryReader(object):
 		'0xcffaedfeL'
 		>>>
 	"""
-	def __init__(self, view: BinaryView, endian: Optional[Endianness] = None) -> 'BinaryReader':
+	def __init__(self, view: BinaryView, endian: Optional[Endianness] = None):
 		self.handle = core.BNCreateBinaryReader(view.handle)
 		if endian is None:
 			core.BNSetBinaryReaderEndianness(self.handle, view.endianness)
@@ -5889,7 +5889,7 @@ class BinaryWriter(object):
 		>>> bw = BinaryWriter(bv, Endianness.BigEndian)
 		>>>
 	"""
-	def __init__(self, view: BinaryView, endian: Optional[Endianness] = None) -> 'BinaryWriter':
+	def __init__(self, view: BinaryView, endian: Optional[Endianness] = None):
 		self.handle = core.BNCreateBinaryWriter(view.handle)
 		if endian is None:
 			core.BNSetBinaryWriterEndianness(self.handle, view.endianness)
@@ -6111,7 +6111,7 @@ class BinaryWriter(object):
 		core.BNSeekBinaryWriterRelative(self.handle, offset)
 
 class StructuredDataValue(object):
-	def __init__(self, type: binaryninja.Type, address: int, value: bytes, endian: Endianness) -> 'StructuredDataValue':
+	def __init__(self, type: binaryninja.Type, address: int, value: bytes, endian: Endianness):
 		self._type = type
 		self._address = address
 		self._value = value
@@ -6200,7 +6200,7 @@ class StructuredDataView(object):
 	_address = 0
 	_bv = None
 
-	def __init__(self, bv: BinaryView, structure_name: str, address: int) -> 'StructuredDataView':
+	def __init__(self, bv: BinaryView, structure_name: str, address: int):
 		self._bv = bv
 		self._structure_name = structure_name
 		self._address = address

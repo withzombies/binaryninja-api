@@ -48,7 +48,7 @@ class CallingConvention(object):
 
 	_registered_calling_conventions = []
 
-	def __init__(self, arch=None, name=None, handle=None, confidence=binaryninja.types.max_confidence):
+	def __init__(self, arch: Optional[binaryninja.Architecture] = None, name=None, handle=None, confidence=binaryninja.types.max_confidence):
 		if handle is None:
 			if arch is None or name is None:
 				self.handle = None
