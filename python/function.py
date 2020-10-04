@@ -1360,7 +1360,7 @@ class Function(object):
 		core.BNAddUserAddressTag(self.handle, arch.handle, addr, tag.handle)
 		return tag
 
-	def remove_user_address_tag(self, addr, tag, arch=None):
+	def remove_user_address_tag(self, addr: int, tag: binaryninja.Tag, arch:Optional[binaryninja.Architecture]=None) -> None:
 		"""
 		``remove_user_address_tag`` removes a Tag object at a given address.
 		Since this removes a user tag, it will be added to the current undo buffer.
@@ -1374,7 +1374,7 @@ class Function(object):
 			arch = self.arch
 		core.BNRemoveUserAddressTag(self.handle, arch.handle, addr, tag.handle)
 
-	def add_auto_address_tag(self, addr, tag, arch=None):
+	def add_auto_address_tag(self, addr: int, tag: binaryninja.Tag, arch: Optional[binaryninja.Architecture] = None) -> None:
 		"""
 		``add_auto_address_tag`` adds an already-created Tag object at a given address.
 
@@ -1387,7 +1387,7 @@ class Function(object):
 			arch = self.arch
 		core.BNAddAutoAddressTag(self.handle, arch.handle, addr, tag.handle)
 
-	def create_auto_address_tag(self, addr, type, data, unique=False, arch=None):
+	def create_auto_address_tag(self, addr: int, type: binaryninja.TagType, data: str, unique: bool = False, arch: Optional[binaryninja.Architecture]=None):
 		"""
 		``create_auto_address_tag`` creates and adds a Tag object at a given address.
 
@@ -1411,7 +1411,7 @@ class Function(object):
 		core.BNAddAutoAddressTag(self.handle, arch.handle, addr, tag.handle)
 		return tag
 
-	def remove_auto_address_tag(self, addr, tag, arch=None):
+	def remove_auto_address_tag(self, addr: int, tag: binaryninja.Tag, arch: Optional[binaryninja.Architecture] =None):
 		"""
 		``remove_auto_address_tag`` removes a Tag object at a given address.
 
