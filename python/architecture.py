@@ -1527,7 +1527,7 @@ class Architecture(with_metaclass(_ArchitectureMetaClass, object)):
 		self.get_instruction_low_level_il(data, addr, func)
 		return func[0]
 
-	def get_reg_name(self, reg):
+	def get_reg_name(self, reg: int) -> str:
 		"""
 		``get_reg_name`` gets a register name from a register number.
 
@@ -1537,7 +1537,7 @@ class Architecture(with_metaclass(_ArchitectureMetaClass, object)):
 		"""
 		return core.BNGetArchitectureRegisterName(self.handle, reg)
 
-	def get_reg_stack_name(self, reg_stack):
+	def get_reg_stack_name(self, reg_stack: int) -> str:
 		"""
 		``get_reg_stack_name`` gets a register stack name from a register stack number.
 

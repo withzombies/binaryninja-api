@@ -26,7 +26,7 @@ import ctypes
 import numbers
 
 # Binary Ninja components
-from typing import Optional, List, Dict, Any, Set, Iterator, Hashable, Tuple
+from typing import Optional, List, Dict, Any, Set, Iterator, Hashable, Tuple, Union
 
 import binaryninja
 from binaryninja import _binaryninjacore as core
@@ -1387,7 +1387,7 @@ class Function(object):
 			arch = self.arch
 		core.BNAddAutoAddressTag(self.handle, arch.handle, addr, tag.handle)
 
-	def create_auto_address_tag(self, addr: int, type: binaryninja.TagType, data: str, unique: bool = False, arch: Optional[binaryninja.Architecture]=None):
+	def create_auto_address_tag(self, addr: int, type: binaryninja.TagType, data: str, unique: bool = False, arch: Optional[binaryninja.Architecture] = None) -> binaryninja.Tag:
 		"""
 		``create_auto_address_tag`` creates and adds a Tag object at a given address.
 
@@ -1411,7 +1411,7 @@ class Function(object):
 		core.BNAddAutoAddressTag(self.handle, arch.handle, addr, tag.handle)
 		return tag
 
-	def remove_auto_address_tag(self, addr: int, tag: binaryninja.Tag, arch: Optional[binaryninja.Architecture] =None):
+	def remove_auto_address_tag(self, addr: int, tag: binaryninja.Tag, arch: Optional[binaryninja.Architecture] = None) -> None:
 		"""
 		``remove_auto_address_tag`` removes a Tag object at a given address.
 
@@ -1425,7 +1425,7 @@ class Function(object):
 		core.BNRemoveAutoAddressTag(self.handle, arch.handle, addr, tag.handle)
 
 	@property
-	def function_tags(self):
+	def function_tags(self) -> List[binaryninja.Tag]:
 		"""
 		``function_tags`` gets a list of all function Tags for the function.
 
@@ -1439,7 +1439,7 @@ class Function(object):
 		core.BNFreeTagList(tags, count.value)
 		return result
 
-	def add_user_function_tag(self, tag):
+	def add_user_function_tag(self, tag: binaryninja.Tag):
 		"""
 		``add_user_function_tag`` adds an already-created Tag object as a function tag.
 		Since this adds a user tag, it will be added to the current undo buffer.
@@ -1449,7 +1449,7 @@ class Function(object):
 		"""
 		core.BNAddUserFunctionTag(self.handle, tag.handle)
 
-	def create_user_function_tag(self, type, data, unique=False):
+	def create_user_function_tag(self, type: binaryninja.TagType, data: str, unique: bool = False) -> binaryninja.Tag:
 		"""
 		``add_user_function_tag`` creates and adds a Tag object as a function tag.
 		Since this adds a user tag, it will be added to the current undo buffer.
@@ -1469,7 +1469,7 @@ class Function(object):
 		core.BNAddUserFunctionTag(self.handle, tag.handle)
 		return tag
 
-	def remove_user_function_tag(self, tag):
+	def remove_user_function_tag(self, tag: binaryninja.Tag) -> None:
 		"""
 		``remove_user_function_tag`` removes a Tag object as a function tag.
 		Since this removes a user tag, it will be added to the current undo buffer.
@@ -1479,7 +1479,7 @@ class Function(object):
 		"""
 		core.BNRemoveUserFunctionTag(self.handle, tag.handle)
 
-	def add_auto_function_tag(self, tag):
+	def add_auto_function_tag(self, tag: binaryninja.Tag) -> None:
 		"""
 		``add_user_function_tag`` adds an already-created Tag object as a function tag.
 
@@ -1488,7 +1488,7 @@ class Function(object):
 		"""
 		core.BNAddAutoFunctionTag(self.handle, tag.handle)
 
-	def create_auto_function_tag(self, type, data, unique=False):
+	def create_auto_function_tag(self, type: binaryninja.TagType, data: str, unique: bool = False) -> binaryninja.Tag:
 		"""
 		``add_user_function_tag`` creates and adds a Tag object as a function tag.
 
@@ -1507,7 +1507,7 @@ class Function(object):
 		core.BNAddAutoFunctionTag(self.handle, tag.handle)
 		return tag
 
-	def remove_auto_function_tag(self, tag):
+	def remove_auto_function_tag(self, tag: binaryninja.TagType) -> None:
 		"""
 		``remove_user_function_tag`` removes a Tag object as a function tag.
 
@@ -1517,17 +1517,17 @@ class Function(object):
 		core.BNRemoveAutoFunctionTag(self.handle, tag.handle)
 
 	@property
-	def low_level_il(self):
+	def low_level_il(self) -> binaryninja.LowLevelILFunction:
 		"""Deprecated property provided for compatibility. Use llil instead."""
 		return binaryninja.lowlevelil.LowLevelILFunction(self.arch, core.BNGetFunctionLowLevelIL(self.handle), self)
 
 	@property
-	def llil(self):
+	def llil(self) -> binaryninja.LowLevelILFunction:
 		"""returns LowLevelILFunction used to represent Function low level IL (read-only)"""
 		return binaryninja.lowlevelil.LowLevelILFunction(self.arch, core.BNGetFunctionLowLevelIL(self.handle), self)
 
 	@property
-	def llil_if_available(self):
+	def llil_if_available(self) -> Optional[binaryninja.LowLevelILFunction]:
 		"""returns LowLevelILFunction used to represent Function low level IL, or None if not loaded (read-only)"""
 		result = core.BNGetFunctionLowLevelILIfAvailable(self.handle)
 		if not result:
@@ -1535,12 +1535,12 @@ class Function(object):
 		return binaryninja.lowlevelil.LowLevelILFunction(self.arch, result, self)
 
 	@property
-	def lifted_il(self):
+	def lifted_il(self) -> binaryninja.LowLevelILFunction:
 		"""returns LowLevelILFunction used to represent lifted IL (read-only)"""
 		return binaryninja.lowlevelil.LowLevelILFunction(self.arch, core.BNGetFunctionLiftedIL(self.handle), self)
 
 	@property
-	def lifted_il_if_available(self):
+	def lifted_il_if_available(self) -> Optional[binaryninja.LowLevelILFunction]:
 		"""returns LowLevelILFunction used to represent lifted IL, or None if not loaded (read-only)"""
 		result = core.BNGetFunctionLiftedILIfAvailable(self.handle)
 		if not result:
@@ -1548,17 +1548,17 @@ class Function(object):
 		return binaryninja.lowlevelil.LowLevelILFunction(self.arch, result, self)
 
 	@property
-	def medium_level_il(self):
+	def medium_level_il(self) -> binaryninja.MediumLevelILFunction:
 		"""Deprecated property provided for compatibility. Use mlil instead."""
 		return binaryninja.mediumlevelil.MediumLevelILFunction(self.arch, core.BNGetFunctionMediumLevelIL(self.handle), self)
 
 	@property
-	def mlil(self):
+	def mlil(self) -> binaryninja.MediumLevelILFunction:
 		"""Function medium level IL (read-only)"""
 		return binaryninja.mediumlevelil.MediumLevelILFunction(self.arch, core.BNGetFunctionMediumLevelIL(self.handle), self)
 
 	@property
-	def mlil_if_available(self):
+	def mlil_if_available(self) -> Optional[binaryninja.MediumLevelILFunction]:
 		"""Function medium level IL, or None if not loaded (read-only)"""
 		result = core.BNGetFunctionMediumLevelILIfAvailable(self.handle)
 		if not result:
@@ -1566,17 +1566,17 @@ class Function(object):
 		return binaryninja.mediumlevelil.MediumLevelILFunction(self.arch, result, self)
 
 	@property
-	def high_level_il(self):
+	def high_level_il(self) -> binaryninja.HighLevelILFunction:
 		"""Deprecated property provided for compatibility. Use hlil instead."""
 		return binaryninja.highlevelil.HighLevelILFunction(self.arch, core.BNGetFunctionHighLevelIL(self.handle), self)
 
 	@property
-	def hlil(self):
+	def hlil(self) -> binaryninja.HighLevelILFunction:
 		"""Function high level IL (read-only)"""
 		return binaryninja.highlevelil.HighLevelILFunction(self.arch, core.BNGetFunctionHighLevelIL(self.handle), self)
 
 	@property
-	def hlil_if_available(self):
+	def hlil_if_available(self) -> Optional[binaryninja.HighLevelILFunction]:
 		"""Function high level IL, or None if not loaded (read-only)"""
 		result = core.BNGetFunctionHighLevelILIfAvailable(self.handle)
 		if not result:
@@ -1584,19 +1584,19 @@ class Function(object):
 		return binaryninja.highlevelil.HighLevelILFunction(self.arch, result, self)
 
 	@property
-	def function_type(self):
+	def function_type(self) -> binaryninja.Type:
 		"""Function type object, can be set with either a string representing the function prototype (`str(function)` shows examples) or a :py:class:`Type` object"""
 		return types.Type(core.BNGetFunctionType(self.handle), platform = self.platform)
 
 	@function_type.setter
-	def function_type(self, value):
+	def function_type(self, value: Union[binaryninja.Type, str]) -> None:
 		if isinstance(value, str):
 			(value, new_name) = self.view.parse_type_string(value)
 			self.name = str(new_name)
 		self.set_user_type(value)
 
 	@property
-	def stack_layout(self):
+	def stack_layout(self) -> List[binaryninja.Variable]:
 		"""List of function stack variables (read-only)"""
 		count = ctypes.c_ulonglong()
 		v = core.BNGetStackLayout(self.handle, count)
@@ -1609,7 +1609,7 @@ class Function(object):
 		return result
 
 	@property
-	def vars(self):
+	def vars(self) -> List[binaryninja.Variable]:
 		"""List of function variables (read-only)"""
 		count = ctypes.c_ulonglong()
 		v = core.BNGetFunctionVariables(self.handle, count)
@@ -1622,7 +1622,7 @@ class Function(object):
 		return result
 
 	@property
-	def indirect_branches(self):
+	def indirect_branches(self) -> List[binaryninja.IndirectBranchInfo]:
 		"""List of indirect branches (read-only)"""
 		count = ctypes.c_ulonglong()
 		branches = core.BNGetIndirectBranches(self.handle, count)
@@ -1633,7 +1633,7 @@ class Function(object):
 		return result
 
 	@property
-	def session_data(self):
+	def session_data(self) -> Dict[Hashable, Any]:
 		"""Dictionary object where plugins can store arbitrary data associated with the function"""
 		handle = ctypes.cast(self.handle, ctypes.c_void_p)
 		if handle.value not in Function._associated_data:
@@ -1644,9 +1644,9 @@ class Function(object):
 			return Function._associated_data[handle.value]
 
 	@property
-	def analysis_performance_info(self):
+	def analysis_performance_info(self) -> Dict[str, int]:
 		count = ctypes.c_ulonglong()
-		info = core.BNGetFunctionAnalysisPerformanceInfo(self.handle, count)
+		info: core.BNPerformanceInfo = core.BNGetFunctionAnalysisPerformanceInfo(self.handle, count)
 		result = {}
 		for i in range(0, count.value):
 			result[info[i].name] = info[i].seconds
@@ -1654,12 +1654,12 @@ class Function(object):
 		return result
 
 	@property
-	def type_tokens(self):
+	def type_tokens(self) -> List[binaryninja.InstructionTextToken]:
 		"""Text tokens for this function's prototype"""
 		return self.get_type_tokens()[0].tokens
 
 	@property
-	def return_type(self):
+	def return_type(self) -> Optional[binaryninja.Type]:
 		"""Return type of the function"""
 		result = core.BNGetFunctionReturnType(self.handle)
 		if not result.type:
@@ -1667,7 +1667,7 @@ class Function(object):
 		return types.Type(result.type, platform = self.platform, confidence = result.confidence)
 
 	@return_type.setter
-	def return_type(self, value):
+	def return_type(self, value: Optional[binaryninja.Type]) -> None:
 		type_conf = core.BNTypeWithConfidence()
 		if value is None:
 			type_conf.type = None
@@ -1678,7 +1678,7 @@ class Function(object):
 		core.BNSetUserFunctionReturnType(self.handle, type_conf)
 
 	@property
-	def return_regs(self):
+	def return_regs(self) -> binaryninja.RegisterSet:
 		"""Registers that are used for the return value"""
 		result = core.BNGetFunctionReturnRegisters(self.handle)
 		reg_set = []
@@ -1689,7 +1689,7 @@ class Function(object):
 		return regs
 
 	@return_regs.setter
-	def return_regs(self, value):
+	def return_regs(self, value: binaryninja.RegisterSet) -> None:
 		regs = core.BNRegisterSetWithConfidence()
 		regs.regs = (ctypes.c_uint * len(value))()
 		regs.count = len(value)
@@ -1702,7 +1702,7 @@ class Function(object):
 		core.BNSetUserFunctionReturnRegisters(self.handle, regs)
 
 	@property
-	def calling_convention(self):
+	def calling_convention(self) -> Optional[binaryninja.CallingConvention]:
 		"""Calling convention used by the function"""
 		result = core.BNGetFunctionCallingConvention(self.handle)
 		if not result.convention:
@@ -1710,7 +1710,7 @@ class Function(object):
 		return binaryninja.callingconvention.CallingConvention(None, handle = result.convention, confidence = result.confidence)
 
 	@calling_convention.setter
-	def calling_convention(self, value):
+	def calling_convention(self, value: Optional[binaryninja.CallingConvention]) -> None:
 		conv_conf = core.BNCallingConventionWithConfidence()
 		if value is None:
 			conv_conf.convention = None
@@ -1721,7 +1721,7 @@ class Function(object):
 		core.BNSetUserFunctionCallingConvention(self.handle, conv_conf)
 
 	@property
-	def parameter_vars(self):
+	def parameter_vars(self) -> List[binaryninja.Variable]:
 		"""List of variables for the incoming function parameters"""
 		result = core.BNGetFunctionParameterVariables(self.handle)
 		var_list = []
@@ -1732,7 +1732,7 @@ class Function(object):
 		return ParameterVariables(var_list, confidence = confidence)
 
 	@parameter_vars.setter
-	def parameter_vars(self, value):
+	def parameter_vars(self, value: List[binaryninja.Variable]) -> None:
 		if value is None:
 			var_list = []
 		else:
@@ -1753,13 +1753,13 @@ class Function(object):
 		core.BNSetUserFunctionParameterVariables(self.handle, var_conf)
 
 	@property
-	def has_variable_arguments(self):
+	def has_variable_arguments(self) -> binaryninja.BoolWithConfidence:
 		"""Whether the function takes a variable number of arguments"""
 		result = core.BNFunctionHasVariableArguments(self.handle)
 		return types.BoolWithConfidence(result.value, confidence = result.confidence)
 
 	@has_variable_arguments.setter
-	def has_variable_arguments(self, value):
+	def has_variable_arguments(self, value: Union[bool, binaryninja.BoolWithConfidence]) -> None:
 		bc = core.BNBoolWithConfidence()
 		bc.value = bool(value)
 		if hasattr(value, 'confidence'):
@@ -1769,13 +1769,13 @@ class Function(object):
 		core.BNSetUserFunctionHasVariableArguments(self.handle, bc)
 
 	@property
-	def stack_adjustment(self):
+	def stack_adjustment(self) -> binaryninja.SizeWithConfidence:
 		"""Number of bytes removed from the stack after return"""
 		result = core.BNGetFunctionStackAdjustment(self.handle)
 		return types.SizeWithConfidence(result.value, confidence = result.confidence)
 
 	@stack_adjustment.setter
-	def stack_adjustment(self, value):
+	def stack_adjustment(self, value: Union[int, binaryninja.SizeWithConfidence]) -> None:
 		oc = core.BNOffsetWithConfidence()
 		oc.value = int(value)
 		if hasattr(value, 'confidence'):
@@ -1785,7 +1785,7 @@ class Function(object):
 		core.BNSetUserFunctionStackAdjustment(self.handle, oc)
 
 	@property
-	def reg_stack_adjustments(self):
+	def reg_stack_adjustments(self) -> Dict[str, binaryninja.RegisterStackAdjustmentWithConfidence]:
 		"""Number of entries removed from each register stack after return"""
 		count = ctypes.c_ulonglong()
 		adjust = core.BNGetFunctionRegisterStackAdjustments(self.handle, count)
@@ -1799,7 +1799,7 @@ class Function(object):
 		return result
 
 	@reg_stack_adjustments.setter
-	def reg_stack_adjustments(self, value):
+	def reg_stack_adjustments(self, value: Dict[str, binaryninja.RegisterStackAdjustmentWithConfidence]) -> None:
 		adjust = (core.BNRegisterStackAdjustment * len(value))()
 		i = 0
 		for reg_stack in value.keys():
@@ -1814,7 +1814,7 @@ class Function(object):
 		core.BNSetUserFunctionRegisterStackAdjustments(self.handle, adjust, len(value))
 
 	@property
-	def clobbered_regs(self):
+	def clobbered_regs(self) -> binaryninja.RegisterSet:
 		"""Registers that are modified by this function"""
 		result = core.BNGetFunctionClobberedRegisters(self.handle)
 		reg_set = []
@@ -1825,7 +1825,7 @@ class Function(object):
 		return regs
 
 	@clobbered_regs.setter
-	def clobbered_regs(self, value):
+	def clobbered_regs(self, value: Union[binaryninja.RegisterSet, List[Union[binaryninja.ILRegister, int, str]]]) -> None:
 		regs = core.BNRegisterSetWithConfidence()
 		regs.regs = (ctypes.c_uint * len(value))()
 		regs.count = len(value)
@@ -1838,35 +1838,35 @@ class Function(object):
 		core.BNSetUserFunctionClobberedRegisters(self.handle, regs)
 
 	@property
-	def global_pointer_value(self):
+	def global_pointer_value(self) -> binaryninja.RegisterValue:
 		"""Discovered value of the global pointer register, if the function uses one (read-only)"""
 		result = core.BNGetFunctionGlobalPointerValue(self.handle)
 		return RegisterValue(self.arch, result.value, confidence = result.confidence)
 
 	@property
-	def comment(self):
+	def comment(self) -> str:
 		"""Gets the comment for the current function"""
 		return core.BNGetFunctionComment(self.handle)
 
 	@comment.setter
-	def comment(self, comment):
+	def comment(self, comment: str) -> None:
 		"""Sets a comment for the current function"""
 		return core.BNSetFunctionComment(self.handle, comment)
 
 	@property
-	def llil_basic_blocks(self):
+	def llil_basic_blocks(self) -> Iterator[binaryninja.LowLevelILBasicBlock]:
 		"""A generator of all LowLevelILBasicBlock objects in the current function"""
 		for block in self.llil:
 			yield block
 
 	@property
-	def mlil_basic_blocks(self):
+	def mlil_basic_blocks(self) -> Iterator[binaryninja.MediumLevelILBasicBlock]:
 		"""A generator of all MediumLevelILBasicBlock objects in the current function"""
 		for block in self.mlil:
 			yield block
 
 	@property
-	def instructions(self):
+	def instructions(self) -> Iterator[Tuple[List[binaryninja.InstructionTextToken], int]]:
 		"""A generator of instruction tokens and their start addresses for the current function"""
 		for block in self.basic_blocks:
 			start = block.start
@@ -1875,65 +1875,65 @@ class Function(object):
 				start += i[1]
 
 	@property
-	def llil_instructions(self):
+	def llil_instructions(self) -> Iterator[binaryninja.LowLevelILInstruction]:
 		"""Deprecated method provided for compatibility. Use llil.instructions instead.  Was: A generator of llil instructions of the current function"""
 		return self.llil.instructions
 
 	@property
-	def mlil_instructions(self):
+	def mlil_instructions(self) -> Iterator[binaryninja.MediumLevelILInstruction]:
 		"""Deprecated method provided for compatibility. Use mlil.instructions instead.  Was: A generator of mlil instructions of the current function"""
 		return self.mlil.instructions
 
 	@property
-	def too_large(self):
+	def too_large(self) -> bool:
 		"""Whether the function is too large to automatically perform analysis (read-only)"""
 		return core.BNIsFunctionTooLarge(self.handle)
 
 	@property
-	def analysis_skipped(self):
+	def analysis_skipped(self) -> bool:
 		"""Whether automatic analysis was skipped for this function"""
 		return core.BNIsFunctionAnalysisSkipped(self.handle)
 
 	@analysis_skipped.setter
-	def analysis_skipped(self, skip):
+	def analysis_skipped(self, skip: bool) -> None:
 		if skip:
 			core.BNSetFunctionAnalysisSkipOverride(self.handle, FunctionAnalysisSkipOverride.AlwaysSkipFunctionAnalysis)
 		else:
 			core.BNSetFunctionAnalysisSkipOverride(self.handle, FunctionAnalysisSkipOverride.NeverSkipFunctionAnalysis)
 
 	@property
-	def analysis_skip_reason(self):
+	def analysis_skip_reason(self) -> binaryninja.AnalysisSkipReason:
 		"""Function analysis skip reason"""
 		return AnalysisSkipReason(core.BNGetAnalysisSkipReason(self.handle))
 
 	@property
-	def analysis_skip_override(self):
+	def analysis_skip_override(self) -> binaryninja.FunctionAnalysisSkipOverride:
 		"""Override for skipping of automatic analysis"""
 		return FunctionAnalysisSkipOverride(core.BNGetFunctionAnalysisSkipOverride(self.handle))
 
 	@analysis_skip_override.setter
-	def analysis_skip_override(self, override):
+	def analysis_skip_override(self, override: binaryninja.FunctionAnalysisSkipOverride) -> None:
 		core.BNSetFunctionAnalysisSkipOverride(self.handle, override)
 
 	@property
-	def unresolved_stack_adjustment_graph(self):
+	def unresolved_stack_adjustment_graph(self) -> Optional[binaryninja.CoreFlowGraph]:
 		"""Flow graph of unresolved stack adjustments (read-only)"""
 		graph = core.BNGetUnresolvedStackAdjustmentGraph(self.handle)
 		if not graph:
 			return None
 		return binaryninja.flowgraph.CoreFlowGraph(graph)
 
-	def mark_recent_use(self):
+	def mark_recent_use(self) -> None:
 		core.BNMarkFunctionAsRecentlyUsed(self.handle)
 
 	def get_comment_at(self, addr: int) -> str:
 		return core.BNGetCommentForAddress(self.handle, addr)
 
-	def set_comment(self, addr, comment):
+	def set_comment(self, addr: int, comment: str):
 		"""Deprecated method provided for compatibility. Use set_comment_at instead."""
 		core.BNSetCommentForAddress(self.handle, addr, comment)
 
-	def set_comment_at(self, addr, comment):
+	def set_comment_at(self, addr: int, comment: str) -> None:
 		"""
 		``set_comment_at`` sets a comment for the current function at the address specified
 
@@ -1947,7 +1947,7 @@ class Function(object):
 		"""
 		core.BNSetCommentForAddress(self.handle, addr, comment)
 
-	def add_user_code_ref(self, from_addr, to_addr, from_arch=None):
+	def add_user_code_ref(self, from_addr: int, to_addr: int, from_arch: Optional[binaryninja.Architecture] = None) -> None:
 		"""
 		``add_user_code_ref`` places a user-defined cross-reference from the instruction at
 		the given address and architecture to the specified target address. If the specified
@@ -1969,7 +1969,7 @@ class Function(object):
 
 		core.BNAddUserCodeReference(self.handle, from_arch.handle, from_addr, to_addr)
 
-	def remove_user_code_ref(self, from_addr, to_addr, from_arch=None):
+	def remove_user_code_ref(self, from_addr: int, to_addr: int, from_arch: Optional[binaryninja.Architecture] = None) -> None:
 		"""
 		``remove_user_code_ref`` removes a user-defined cross-reference.
 		If the given address is not contained within this function, or if there is no
@@ -1990,7 +1990,7 @@ class Function(object):
 
 		core.BNRemoveUserCodeReference(self.handle, from_arch.handle, from_addr, to_addr)
 
-	def get_low_level_il_at(self, addr, arch=None):
+	def get_low_level_il_at(self, addr: int, arch: Optional[binaryninja.Architecture] = None) -> Optional[binaryninja.LowLevelILInstruction]:
 		"""
 		``get_low_level_il_at`` gets the LowLevelILInstruction corresponding to the given virtual address
 
@@ -2013,7 +2013,7 @@ class Function(object):
 
 		return self.llil[idx]
 
-	def get_low_level_il_exits_at(self, addr, arch=None):
+	def get_low_level_il_exits_at(self, addr: int, arch: Optional[binaryninja.Architecture] = None) -> List[int]:
 		if arch is None:
 			arch = self.arch
 		count = ctypes.c_ulonglong()
@@ -2024,7 +2024,7 @@ class Function(object):
 		core.BNFreeILInstructionList(exits)
 		return result
 
-	def get_reg_value_at(self, addr, reg, arch=None):
+	def get_reg_value_at(self, addr: int, reg: str, arch: Optional[binaryninja.Architecture] = None) -> binaryninja.RegisterValue:
 		"""
 		``get_reg_value_at`` gets the value the provided string register address corresponding to the given virtual address
 
@@ -2044,7 +2044,7 @@ class Function(object):
 		result = RegisterValue(arch, value)
 		return result
 
-	def get_reg_value_after(self, addr, reg, arch=None):
+	def get_reg_value_after(self, addr: int, reg: str, arch: Optional[binaryninja.Architecture] = None) -> binaryninja.RegisterValue:
 		"""
 		``get_reg_value_after`` gets the value instruction address corresponding to the given virtual address
 
@@ -2064,7 +2064,7 @@ class Function(object):
 		result = RegisterValue(arch, value)
 		return result
 
-	def get_stack_contents_at(self, addr, offset, size, arch=None):
+	def get_stack_contents_at(self, addr: int, offset: int, size: int, arch: Optional[binaryninja.Architecture] = None) -> binaryninja.RegisterValue:
 		"""
 		``get_stack_contents_at`` returns the RegisterValue for the item on the stack in the current function at the
 		given virtual address ``addr``, stack offset ``offset`` and size of ``size``. Optionally specifying the architecture.
@@ -2089,14 +2089,14 @@ class Function(object):
 		result = RegisterValue(arch, value)
 		return result
 
-	def get_stack_contents_after(self, addr, offset, size, arch=None):
+	def get_stack_contents_after(self, addr: int, offset: int, size: int, arch: Optional[binaryninja.Architecture] = None) -> binaryninja.RegisterValue:
 		if arch is None:
 			arch = self.arch
 		value = core.BNGetStackContentsAfterInstruction(self.handle, arch.handle, addr, offset, size)
 		result = RegisterValue(arch, value)
 		return result
 
-	def get_parameter_at(self, addr, func_type, i, arch=None):
+	def get_parameter_at(self, addr: int, func_type: Optional[binaryninja.Type], i: int, arch: Optional[binaryninja.Architecture] = None) -> binaryninja.RegisterValue:
 		if arch is None:
 			arch = self.arch
 		if func_type is not None:
@@ -2105,14 +2105,14 @@ class Function(object):
 		result = RegisterValue(arch, value)
 		return result
 
-	def get_parameter_at_low_level_il_instruction(self, instr, func_type, i):
+	def get_parameter_at_low_level_il_instruction(self, instr, func_type: Optional[binaryninja.Type], i: int) -> binaryninja.RegisterValue:
 		if func_type is not None:
 			func_type = func_type.handle
 		value = core.BNGetParameterValueAtLowLevelILInstruction(self.handle, instr, func_type, i)
 		result = RegisterValue(self.arch, value)
 		return result
 
-	def get_regs_read_by(self, addr, arch=None):
+	def get_regs_read_by(self, addr: int, arch: Optional[binaryninja.Architecture] = None) -> List[str]:
 		if arch is None:
 			arch = self.arch
 		count = ctypes.c_ulonglong()
@@ -2123,7 +2123,7 @@ class Function(object):
 		core.BNFreeRegisterList(regs)
 		return result
 
-	def get_regs_written_by(self, addr, arch=None):
+	def get_regs_written_by(self, addr: int, arch: Optional[binaryninja.Architecture] = None) -> List[str]:
 		if arch is None:
 			arch = self.arch
 		count = ctypes.c_ulonglong()
@@ -2134,7 +2134,7 @@ class Function(object):
 		core.BNFreeRegisterList(regs)
 		return result
 
-	def get_stack_vars_referenced_by(self, addr, arch=None):
+	def get_stack_vars_referenced_by(self, addr: int, arch: Optional[binaryninja.Architecture] = None) -> List[binaryninja.StackVariableReference]:
 		if arch is None:
 			arch = self.arch
 		count = ctypes.c_ulonglong()
@@ -2148,7 +2148,7 @@ class Function(object):
 		core.BNFreeStackVariableReferenceList(refs, count.value)
 		return result
 
-	def get_constants_referenced_by(self, addr, arch=None):
+	def get_constants_referenced_by(self, addr: int, arch: Optional[binaryninja.Architecture] = None) -> List[binaryninja.ConstantReference]:
 		if arch is None:
 			arch = self.arch
 		count = ctypes.c_ulonglong()
@@ -2159,7 +2159,7 @@ class Function(object):
 		core.BNFreeConstantReferenceList(refs)
 		return result
 
-	def get_lifted_il_at(self, addr, arch=None):
+	def get_lifted_il_at(self, addr: int, arch: Optional[binaryninja.Architecture] = None) -> Optional[binaryninja.LowLevelILInstruction]:
 		if arch is None:
 			arch = self.arch
 
@@ -2170,7 +2170,7 @@ class Function(object):
 
 		return self.lifted_il[idx]
 
-	def get_lifted_il_flag_uses_for_definition(self, i, flag):
+	def get_lifted_il_flag_uses_for_definition(self, i: int, flag: Union[int, str, binaryninja.ILFlag]) -> List[int]:
 		flag = self.arch.get_flag_index(flag)
 		count = ctypes.c_ulonglong()
 		instrs = core.BNGetLiftedILFlagUsesForDefinition(self.handle, i, flag, count)
@@ -2180,7 +2180,7 @@ class Function(object):
 		core.BNFreeILInstructionList(instrs)
 		return result
 
-	def get_lifted_il_flag_definitions_for_use(self, i, flag):
+	def get_lifted_il_flag_definitions_for_use(self, i: int, flag: Union[int, str, binaryninja.ILFlag]) -> List[int]:
 		flag = self.arch.get_flag_index(flag)
 		count = ctypes.c_ulonglong()
 		instrs = core.BNGetLiftedILFlagDefinitionsForUse(self.handle, i, flag, count)
@@ -2190,7 +2190,7 @@ class Function(object):
 		core.BNFreeILInstructionList(instrs)
 		return result
 
-	def get_flags_read_by_lifted_il_instruction(self, i):
+	def get_flags_read_by_lifted_il_instruction(self, i: int):
 		count = ctypes.c_ulonglong()
 		flags = core.BNGetFlagsReadByLiftedILInstruction(self.handle, i, count)
 		result = []
@@ -2546,7 +2546,7 @@ class Function(object):
 		core.BNFreeVariableNameAndType(found_var)
 		return result
 
-	def get_type_tokens(self, settings=None):
+	def get_type_tokens(self, settings: Optional[binaryninja.DisassemblySettings]=None) -> List[binaryninja.DisassemblyTextLine]:
 		if settings is not None:
 			settings = settings.handle
 		count = ctypes.c_ulonglong()
