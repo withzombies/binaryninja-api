@@ -30,7 +30,7 @@ from binaryninja.enums import (Endianness, ImplicitRegisterExtend, BranchType,
 import binaryninja
 from binaryninja import log
 from binaryninja import lowlevelil
-from binaryninja import types
+from binaryninja import bntypes as types
 from binaryninja import databuffer
 from binaryninja import platform
 from binaryninja import callingconvention

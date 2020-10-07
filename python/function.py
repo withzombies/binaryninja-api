@@ -33,7 +33,7 @@ from binaryninja import _binaryninjacore as core
 from binaryninja import associateddatastore  # Required in the main scope due to being an argument for _FunctionAssociatedDataStore
 from binaryninja import highlight
 from binaryninja import log
-from binaryninja import types
+from binaryninja import bntypes as types
 from binaryninja.enums import (AnalysisSkipReason, FunctionGraphType, BranchType, SymbolType, InstructionTextTokenType,
 	HighlightStandardColor, HighlightColorStyle, RegisterValueType, ImplicitRegisterExtend,
 	DisassemblyOption, IntegerDisplayType, InstructionTextTokenContext, VariableSourceType,
